@@ -1,0 +1,82 @@
+import org.ajoberstar.grgit.*
+
+plugins {
+    id 'org.beryx.runtime' version '1.0.0'
+    id "com.github.johnrengelman.shadow" version "4.0.3"
+    id 'org.openjfx.javafxplugin' version '0.0.5'
+    id "org.ajoberstar.grgit" version "3.0.0"
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+ext {
+    cloneDir = "$buildDir/clone"
+    imageDirPath = "$buildDir/pacman"
+    imageZipPath = "$buildDir/image-zip/pacman.zip"
+}
+
+dependencies {
+    compile 'com.github.almasb:fxgl:0.5.4'
+}
+
+application {
+    // mainClassName = 'com.almasb.fxglgames.pacman.PacmanApp'
+    mainClassName = 'org.beryx.runtime.launcher.Launcher'
+    applicationName = 'pacman'
+}
+
+// This task clones the AlmasB/FXGLGames project into cloneDir. The commitId is configured in gradle.properties.
+task cloneSourceProject {
+    outputs.dir(cloneDir)
+    inputs.property("commitId", commitId)
+    doLast {
+        project.logger.info("Deleting ${cloneDir}...")
+        delete(cloneDir)
+        project.logger.info("Cloning AlmasB/FXGLGames...")
+        def grgit = Grgit.clone(dir: cloneDir, uri: "https://github.com/AlmasB/FXGLGames.git")
+        project.logger.debug("grgit: $grgit")
+        project.logger.info("Resolving commit $commitId")
+        def commitObj = grgit.resolve.toCommit(commitId)
+        project.logger.debug("commitObj: $commitObj")
+        grgit.reset(commit: commitObj, mode: 'soft')
+
+        def launcherDir = file("$cloneDir/Pacman/src/main/java/org/beryx/runtime/launcher")
+        launcherDir.mkdirs()
+        copy {
+            from 'launcher/Launcher.java'
+            into launcherDir
+        }
+    }
+}
+
+sourceSets.main.java.srcDirs = ["$cloneDir/Pacman/src/main/java"]
+sourceSets.main.resources.srcDirs = ["$cloneDir/Pacman/src/main/resources"]
+
+compileJava.dependsOn 'cloneSourceProject'
+tasks.jar.enabled = true
+
+javafx {
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+runtime {
+    imageDir = file(imageDirPath)
+    imageZip = file(imageZipPath)
+    options = ['--strip-debug', '--compress', '2', '--no-header-files', '--no-man-pages']
+    modules = ['java.se']
+}
+
+tasks.runtime.doLast {
+    copy {
+        from('src/main/resources')
+        into("$buildDir/image/bin")
+    }
+}
