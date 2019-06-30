@@ -5,7 +5,7 @@
 ## Badass Runtime Plugin - Pacman Example ##
 
 This project shows how to use the [Badass Runtime Plugin](https://github.com/beryx/badass-runtime-plugin/) to create a
-custom runtime image of a non-modularized application.
+custom runtime image and a platform-specific installer for a non-modularized application.
 Our example application is [Almas Baimagambetov's](https://github.com/AlmasB) Pacman.
 This application is available in the [FXGLGames](https://github.com/AlmasB/FXGLGames) repository, which includes several games based on his awesome [FXGL](https://github.com/AlmasB/FXGL) game library.
 
@@ -31,3 +31,13 @@ The start scripts are found in the `build/pacman/bin` directory.
   This may take several minutes. Be patient.)
 
 You can easily adjust the `build.gradle` script if you want to create a runtime image for another game from the FXGLGames repository.
+
+### Creating a platform-specific installer
+
+To create the platform-specific installer execute:
+
+```
+./gradlew jpackage
+```
+
+The generated platform-specific installers are found in the `build/jpackage` directory.
